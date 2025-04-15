@@ -18,6 +18,7 @@ import {
 import { pipe } from 'fp-ts/function'
 import * as NEA from 'fp-ts/NonEmptyArray'
 import { useControls } from 'leva'
+import { Key } from 'react'
 
 const SphereParticles = (
   props: JSX.IntrinsicElements['points']
@@ -236,20 +237,14 @@ const SphereArrowDemo = () => {
   )
 }
 
-const CubeParticles = () => {
-  // const count = 1000
-  // const positions = new Float32Array(count * 3)
-  // const colors = new Float32Array(count * 3)
+type NextFunc = (
+  x: number,
+  y: number,
+  z: number,
+  t: number
+) => number
 
-  // const PointGeometry = new BufferGeometry()
-  // PointGeometry.setAttribute(
-  //   'positions',
-  //   new Float32BufferAttribute(positions, 3)
-  // )
-  // PointGeometry.setAttribute(
-  //   'colors',
-  //   new Float32BufferAttribute(colors, 3)
-  // )
+const AnyParticles = ({ next }: { next: NextFunc }) => {
   const count = 100000
 
   const geometry = new Float32Array(count * 3)
@@ -279,8 +274,6 @@ const CubeParticles = () => {
     new Float32BufferAttribute(color, 3)
   )
 
-  const next = (x: number) => (Math.sin(x) + x) / 2
-
   useFrame(({ clock }) => {
     const elapsedTime = clock.getElapsedTime()
     const oldPosition =
@@ -291,9 +284,9 @@ const CubeParticles = () => {
       const y = oldPosition[i * 3 + 1]
       const z = oldPosition[i * 3 + 2]
 
-      newPosition[i * 3] = next(x)
-      newPosition[i * 3 + 1] = next(y)
-      newPosition[i * 3 + 2] = next(z)
+      newPosition[i * 3] = next(x, y, z, elapsedTime)
+      newPosition[i * 3 + 1] = next(y, z, x, elapsedTime)
+      newPosition[i * 3 + 2] = next(z, x, y, elapsedTime)
     }
 
     PointGeometry.setAttribute(
@@ -304,38 +297,53 @@ const CubeParticles = () => {
 
   return (
     <points geometry={PointGeometry}>
-      <pointsMaterial
-        size={0.001}
-        sizeAttenuation
-        vertexColors
-      />
+      <pointsMaterial size={0.001} vertexColors />
     </points>
   )
 }
 
+const cubeNext: NextFunc = (x, y, z, t) =>
+  (Math.sin(x) + x) / 2
+const spiralNext: NextFunc = (x, y, z, t) =>
+  Math.pow(1 + Math.cos(x * 2) * 0.1, 0.2) *
+  Math.pow(1 + Math.cos(y * 2) * 0.11, 0.2) *
+  Math.pow(1 + Math.cos(z * 2) * 0.11, 0.2) *
+  x
+
+const wavyNext: NextFunc = (x, y, z, t) =>
+  x * (1 + 0.01 * Math.sin(y)) + 0.01 * Math.cos(z)
+
+const sandNext: NextFunc = (x, y, z, t) =>
+  x +
+  Math.sin(t) * 0.1 -
+  Math.sin(t - 0.2) * 0.1 +
+  0.01 * Math.cos(z * 2) * x * y * z * Math.sin(2 * t) +
+  0.01 * Math.sin(x * y * z * Math.sin(t))
+
+const nextFunctions = {
+  cube: cubeNext,
+  spiral: spiralNext,
+  wavy: wavyNext,
+  sand: sandNext,
+} as const
+
 const Scene = () => {
-  const { particles } = useControls({
-    particles: {
-      value: 'sphere1',
-      options: [
-        'sphere1',
-        'sphere2',
-        'sphere3 - go inside the sphere',
-        'cube',
-      ],
+  const nextFuncOptions = Object.keys(
+    nextFunctions
+  ) as Array<keyof typeof nextFunctions>
+  const defaultNextFunc =
+    nextFuncOptions[nextFuncOptions.length - 1]
+
+  const { next } = useControls({
+    next: {
+      value: defaultNextFunc,
+      options: nextFuncOptions,
     },
   })
 
-  return (
-    <>
-      {particles === 'sphere1' && <SphereParticles />}
-      {particles === 'sphere2' && <SphereParticles2 />}
-      {particles.includes('sphere3') && (
-        <SphereParticles3 />
-      )}
-      {particles === 'cube' && <CubeParticles />}
-    </>
-  )
+  const nextFunc = nextFunctions[next]
+
+  return <AnyParticles next={nextFunc} />
 }
 
 const ParticalCanvas = () => {

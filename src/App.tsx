@@ -8,7 +8,7 @@ const App = () => {
   const { scene } = useControls({
     scene: {
       value: 'particles',
-      options: ['raymarching', 'particles', 'main'],
+      options: ['raymarching', 'particles'],
     },
   })
 
@@ -16,7 +16,6 @@ const App = () => {
     <div id='app'>
       {scene === 'raymarching' && <RayCanvas />}
       {scene === 'particles' && <ParticalCanvas />}
-      {scene === 'main' && <MainCanvas />}
     </div>
   )
 }
