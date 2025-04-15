@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/3d-experiments/static/css/main.7586c808.css",
+    "main.js": "/3d-experiments/static/js/main.ed3d513e.js",
+    "index.html": "/3d-experiments/index.html",
+    "main.7586c808.css.map": "/3d-experiments/static/css/main.7586c808.css.map",
+    "main.ed3d513e.js.map": "/3d-experiments/static/js/main.ed3d513e.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.7586c808.css",
+    "static/js/main.ed3d513e.js"
+  ]
+}
